@@ -1,0 +1,23 @@
+{
+  "name": "slack-hackathon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "babel-watch src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patrick-lai/slack-hackathon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/patrick-lai/slack-hackathon/issues"
+  },
+  "homepage": "https://github.com/patrick-lai/slack-hackathon#readme",
+  "devDependencies": {
+    "babel-watch": "^7.0.0"
+  }
+}
