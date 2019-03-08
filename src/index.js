@@ -2,91 +2,97 @@
  * Secret Fuhrer game engine
  */
 
+import axios from 'axios';
 import _ from 'lodash';
 import express from 'express';
-import session from 'express-session';
-import uuid from 'uuid';
-import { reset, availableRoles, removeHitler, players } from './gameState';
+import { fetchCuisinesFromSydney, fetchRestuarants } from './apis';
+import bodyParser from 'body-parser';
 
 const app = express();
 
-// Game is session based
-app.set('trust proxy', 1); // trust first proxy
-app.use(
-  session({
-    genid: function(req) {
-      return uuid(); // use UUIDs for session IDs
-    },
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-  })
-);
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+// parse application/json
+app.use(bodyParser.json());
 
-// Always restore session from game state soo ppl cant hack
-app.use((req, res, next) => {
-  req.session.player = players.get(req.session.id);
-  console.log(players);
-  next();
+app.post('/cuisines', async (req, res) => {
+  const { data } = await fetchCuisinesFromSydney();
+
+  const actions = data.map(cuisine => ({
+    name: cuisine.cuisine_name,
+    text: cuisine.cuisine_name,
+    value: cuisine.cuisine_id,
+    type: 'button'
+  }));
+
+  res.json({
+    text: `Found ${actions.length} cuisines near you`,
+    attachments: [
+      {
+        text: 'Pick your favourite cuisines',
+        color: '#3AA3E3',
+        attachment_type: 'default',
+        callback_id: 'choose_food',
+        actions
+      }
+    ]
+  });
 });
 
-// Join game
+app.post('/search', async (req, res) => {
+  console.log('@@ HEY', req.body);
+  const body = JSON.parse(req.body.text);
 
-app.use('/reset-game', (rea, res) => {
-  reset();
-  res.end();
+  //   const responseUrl = body.response_url;
+  const cuisines = _.get(body, 'actions').map(action => action.value);
+  const { data } = await fetchRestuarants({ cuisines });
+
+  console.log('@@ HEY', data);
+
+  const attachments = data.restaurants.map(({ restaurant }) => ({
+    text: restaurant.name
+  }));
+
+  const result = {
+    text: 'Restuarants matching:',
+    attachments
+  };
+  // Post back to slack
+  axios.post(
+    'https://hooks.slack.com/services/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',
+    result
+  );
+
+  res.json(result);
 });
 
-// Assign role
-app.use('/join', (req, res) => {
-  // Assign random role
-  const role = _.shuffle(availableRoles)[0];
+app.post('/restuarants', async (req, res) => {
+  console.log('@@ HEY', req.body);
+  const body = JSON.parse(req.body.payload);
 
-  // Only init if not already a player
-  if (!req.session.player) {
-    // Init session
-    req.session.player = {
-      isPresident: false,
-      isChancellor: false,
-      role
-    };
+  //   const responseUrl = body.response_url;
+  const cuisines = _.get(body, 'actions').map(action => action.value);
+  const { data } = await fetchRestuarants({ cuisines });
 
-    // Only one hitler
-    if (role === 'hitler') removeHitler();
-    // Register session to Weakmap
-    players.set(req.session.id, req.session.player);
-  }
+  console.log('@@ HEY', data);
 
-  res.json(req.session.player);
+  const attachments = data.restaurants.map(({ restaurant }) => ({
+    text: restaurant.name
+  }));
+
+  const result = {
+    text: 'Restuarants matching:',
+    attachments
+  };
+  // Post back to slack
+  axios.post(
+    'https://hooks.slack.com/services/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',
+    result
+  );
+
+  res.json(result);
 });
 
-// Start game (anyone)
-
-app.use('/start-new-game', (req, res) => {
-    
+app.listen(8080, '0.0.0.0', () => {
+  console.log('@@ APP SERVED on 8080');
 });
-
-// Random president
-
-// President picks cancellor
-
-// Vote
-
-// Turn
-
-// VOTING BLOCK
-
-// If voted in president gets 3 cards off the stack and he picks 2
-
-// Chancellor picks 1 of the remaining
-
-// VOTING BLOCK
-
-// Check if game is won
-
-// Repeat turn
-
-app.listen(3000, '0.0.0.0', () =>
-  console.log('App is served at localhost:3000')
-);
