@@ -1,1 +1,7 @@
-slack-hackathon
+# slack-hackathon
+
+```bash
+
+npm run watch
+
+```
