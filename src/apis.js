@@ -5,8 +5,6 @@
 import axios from 'axios';
 import qs from 'querystring';
 
-console.log('@@ KEY', process.env.ZOMATO_API_KEY);
-
 axios.defaults.headers.common['user-key'] = process.env.ZOMATO_API_KEY;
 
 // Sydney is 260

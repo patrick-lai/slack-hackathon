@@ -15,21 +15,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/health', (req, res) => {
-  res.status(200).end();
-});
-
 app.post('/cuisines', async (req, res) => {
   const { text } = req.body;
-
-  const responses = await Promise.all([
+  const [{ data }, { data: imageData }] = await Promise.all([
     fetchRestuarants({ cuisines: text }),
     fetchImage(`${text}%20food`)
   ]);
-
-  const { data } = responses[0];
-
-  const { data: imageData } = responses[1];
 
   const hits = _.get(imageData, 'hits');
   const imageUrl = _.get(_.shuffle(hits), '[0].previewURL');
