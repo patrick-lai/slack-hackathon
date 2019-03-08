@@ -30,5 +30,7 @@ export const fetchRestuarants = params => {
 
 export const fetchImage = (q = 'restaurant') =>
   axios.get(
-    `https://pixabay.com/api/?key=11820798-603b423f427923d5b67924e8a&q=${q}&image_type=photo&pretty=true`
+    `https://pixabay.com/api/?key=${
+      process.env.PIXEL_API_KEY
+    }&q=${q}&image_type=photo&pretty=true`
   );
