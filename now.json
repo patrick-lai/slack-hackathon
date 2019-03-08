@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "**/*.js",
+      "use": "@now/node-server"
+    }
+  ],
+  "build": {
+    "env": {
+      "ZOMATO_API_KEY": "1f5469278e16a2bfcf2282340a8b8421"
+    }
+  }
+}

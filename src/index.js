@@ -16,6 +16,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.post('/cuisines', async (req, res) => {
+  const { text } = req.body;
+  
   const { data } = await fetchCuisinesFromSydney();
 
   const actions = data.map(cuisine => ({
