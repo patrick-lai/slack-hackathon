@@ -5,7 +5,7 @@
 import axios from 'axios';
 import _ from 'lodash';
 import express from 'express';
-import { fetchCuisinesFromSydney, fetchRestuarants } from './apis';
+import { fetchCuisinesFromSydney, fetchRestuarants, fetchImage } from './apis';
 import bodyParser from 'body-parser';
 
 const app = express();
@@ -15,82 +15,41 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // parse application/json
 app.use(bodyParser.json());
 
+app.get('/health', (req, res) => {
+  res.status(200).end();
+});
+
 app.post('/cuisines', async (req, res) => {
   const { text } = req.body;
-  
-  const { data } = await fetchCuisinesFromSydney();
 
-  const actions = data.map(cuisine => ({
-    name: cuisine.cuisine_name,
-    text: cuisine.cuisine_name,
-    value: cuisine.cuisine_id,
-    type: 'button'
-  }));
+  const responses = await Promise.all([
+    fetchRestuarants({ cuisines: text }),
+    fetchImage(`${text}%20food`)
+  ]);
 
-  res.json({
-    text: `Found ${actions.length} cuisines near you`,
-    attachments: [
-      {
-        text: 'Pick your favourite cuisines',
-        color: '#3AA3E3',
-        attachment_type: 'default',
-        callback_id: 'choose_food',
-        actions
-      }
-    ]
-  });
-});
+  const { data } = responses[0];
 
-app.post('/search', async (req, res) => {
-  console.log('@@ HEY', req.body);
-  const body = JSON.parse(req.body.text);
+  const { data: imageData } = responses[1];
 
-  //   const responseUrl = body.response_url;
-  const cuisines = _.get(body, 'actions').map(action => action.value);
-  const { data } = await fetchRestuarants({ cuisines });
-
-  console.log('@@ HEY', data);
+  const hits = _.get(imageData, 'hits');
+  const imageUrl = _.get(_.shuffle(hits), '[0].previewURL');
 
   const attachments = data.restaurants.map(({ restaurant }) => ({
-    text: restaurant.name
+    title: `We suggest the ${text} restuarant`,
+    text: `
+*${restaurant.name}*
+Location: ${restaurant.location.address}
+${restaurant.url}
+    `,
+    image_url: imageUrl,
+    mrkdwn: ['text', 'pretext', 'title']
   }));
 
   const result = {
+    response_type: 'in_channel',
     text: 'Restuarants matching:',
-    attachments
+    attachments: [_.shuffle(attachments)[0]]
   };
-  // Post back to slack
-  axios.post(
-    'https://hooks.slack.com/services/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',
-    result
-  );
-
-  res.json(result);
-});
-
-app.post('/restuarants', async (req, res) => {
-  console.log('@@ HEY', req.body);
-  const body = JSON.parse(req.body.payload);
-
-  //   const responseUrl = body.response_url;
-  const cuisines = _.get(body, 'actions').map(action => action.value);
-  const { data } = await fetchRestuarants({ cuisines });
-
-  console.log('@@ HEY', data);
-
-  const attachments = data.restaurants.map(({ restaurant }) => ({
-    text: restaurant.name
-  }));
-
-  const result = {
-    text: 'Restuarants matching:',
-    attachments
-  };
-  // Post back to slack
-  axios.post(
-    'https://hooks.slack.com/services/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',
-    result
-  );
 
   res.json(result);
 });

@@ -28,6 +28,7 @@ export const fetchRestuarants = params => {
   const overriden = {
     ...params,
     count: 50,
+    entity_type: 'city',
     entity_id: 260, // Always sydney
     radius: 3000
   };
@@ -36,3 +37,8 @@ export const fetchRestuarants = params => {
     `https://developers.zomato.com/api/v2.1/search?${qs.stringify(overriden)}`
   );
 };
+
+export const fetchImage = (q = 'restaurant') =>
+  axios.get(
+    `https://pixabay.com/api/?key=11820798-603b423f427923d5b67924e8a&q=${q}&image_type=photo&pretty=true`
+  );
