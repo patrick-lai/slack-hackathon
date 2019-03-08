@@ -14,4 +14,4 @@ export const discardPile = [];
 export const liberal = [];
 export const fascist = [];
 
-export const players = new WeakMap();
+export const players = new Map();

@@ -5,7 +5,8 @@
 import _ from 'lodash';
 import express from 'express';
 import session from 'express-session';
-import { reset, availableRoles, removeHitler } from './gameState';
+import uuid from 'uuid';
+import { reset, availableRoles, removeHitler, players } from './gameState';
 
 const app = express();
 
@@ -13,12 +14,22 @@ const app = express();
 app.set('trust proxy', 1); // trust first proxy
 app.use(
   session({
+    genid: function(req) {
+      return uuid(); // use UUIDs for session IDs
+    },
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }
   })
 );
+
+// Always restore session from game state soo ppl cant hack
+app.use((req, res, next) => {
+  req.session.player = players.get(req.session.id);
+  console.log(players);
+  next();
+});
 
 // Join game
 
@@ -44,6 +55,7 @@ app.use('/join', (req, res) => {
     // Only one hitler
     if (role === 'hitler') removeHitler();
     // Register session to Weakmap
+    players.set(req.session.id, req.session.player);
   }
 
   res.json(req.session.player);
@@ -51,7 +63,9 @@ app.use('/join', (req, res) => {
 
 // Start game (anyone)
 
-app.use('/start-new-game', (req, res) => {});
+app.use('/start-new-game', (req, res) => {
+    
+});
 
 // Random president
 
